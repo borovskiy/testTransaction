@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, func
+from sqlalchemy import Column, Integer, String, Numeric, ForeignKey, DateTime, func, CheckConstraint
 from sqlalchemy.orm import relationship
 from app.db import Base
 
@@ -12,6 +12,9 @@ class Wallet(Base):
 
     outgoing = relationship("Transaction", foreign_keys="Transaction.from_wallet_id")
     incoming = relationship("Transaction", foreign_keys="Transaction.to_wallet_id")
+    __table_args__ = (
+        CheckConstraint('balance >= 0', name='wallet_balance_non_negative'),
+    )
 
 
 class Transaction(Base):
