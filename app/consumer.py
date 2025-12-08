@@ -1,6 +1,5 @@
 import asyncio
 
-import aiohttp
 from faststream import FastStream, AckPolicy
 from faststream.kafka import KafkaBroker, KafkaMessage
 
@@ -12,7 +11,7 @@ RETRY_DELAY = 3
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
 GET_CHAT_URL = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/getChat"
-broker = KafkaBroker("localhost:9094")
+broker = KafkaBroker("kafka:9094")
 
 app = FastStream(broker)
 

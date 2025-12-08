@@ -27,6 +27,7 @@ BASE_DELAY = 0.05
 
 
 async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount: Decimal) -> TransferFullResponse:
+    logging.info("transfer_funds")
     for attempt in range(MAX_RETRIES):
         try:
             return await _do_transfer(session, from_id, to_id, amount)
@@ -57,6 +58,7 @@ async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount
 
 
 async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: Decimal) -> TransferFullResponse:
+    logging.info("_do_transfer")
     if amount <= 0:
         raise _forbidden("Amount must be > 0")
 
@@ -67,7 +69,7 @@ async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: 
             .where(Wallet.id.in_([from_id, to_id, settings.ADMIN_WALLET_ID]))
             .with_for_update()
         )
-
+        logging.info("select with_for_update")
         wallets: Sequence[Wallet] = (await session.execute(stmt)).scalars().all()
         wallet_map = {w.id: w for w in wallets}
 
@@ -87,27 +89,26 @@ async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: 
 
         total_spend = amount + commission
 
-        # Проверяем баланс
+        logging.info("Проверяем баланс")
         if from_wallet.balance < total_spend:
             raise _forbidden("Insufficient funds")
 
-        # Списываем
         from_wallet.balance -= total_spend
-
-        # Зачисляем получателю
+        logging.info("Списываем")
         to_wallet.balance += amount
+        logging.info("Зачисляем получателю")
 
-        # Комиссия админу
         if commission > Decimal("0"):
+            logging.info("Комиссия админу")
             admin_wallet.balance += commission
 
-        # Лог транзакции
         tx = Transaction(
             from_wallet_id=from_id,
             to_wallet_id=to_id,
             amount=amount,
             commission=commission,
         )
+        logging.info("Лог транзакции")
         session.add(tx)
     return TransferFullResponse(amount=amount, commission=commission, success=True,
                                 wallet_id_telegram_from=from_wallet.id_wallet_telegram,
