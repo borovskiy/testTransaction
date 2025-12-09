@@ -13,7 +13,7 @@ from sqlalchemy.exc import (
 from app.models import Wallet, Transaction
 from app.config import settings
 from app.raises import _forbidden, _bad_request
-from app.schemas import TransferResponse, TransferFullResponse
+from app.schemas import TransferFullResponseSchema, WallerCreateSchema
 
 RETRYABLE_ERRORS = (
     "deadlock detected",
@@ -26,7 +26,16 @@ MAX_RETRIES = 5
 BASE_DELAY = 0.05
 
 
-async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount: Decimal) -> TransferFullResponse:
+async def add_wallet(data: WallerCreateSchema, session: AsyncSession) -> Wallet:
+    async with session.begin():
+        obj = Wallet(**data.model_dump())
+        session.add(obj)
+        await session.flush()
+    return obj
+
+
+async def transfer_funds(session: AsyncSession, from_id: int, to_id: int,
+                         amount: Decimal) -> TransferFullResponseSchema:
     logging.info("transfer_funds")
     for attempt in range(MAX_RETRIES):
         try:
@@ -57,7 +66,7 @@ async def transfer_funds(session: AsyncSession, from_id: int, to_id: int, amount
     raise _bad_request("Transfer failed after retries due to locking issues")
 
 
-async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: Decimal) -> TransferFullResponse:
+async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: Decimal) -> TransferFullResponseSchema:
     logging.info("_do_transfer")
     if amount <= 0:
         raise _forbidden("Amount must be > 0")
@@ -110,6 +119,6 @@ async def _do_transfer(session: AsyncSession, from_id: int, to_id: int, amount: 
         )
         logging.info("Лог транзакции")
         session.add(tx)
-    return TransferFullResponse(amount=amount, commission=commission, success=True,
-                                wallet_id_telegram_from=from_wallet.id_wallet_telegram,
-                                wallet_id_telegram_to=to_wallet.id_wallet_telegram)
+    return TransferFullResponseSchema(amount=amount, commission=commission, success=True,
+                                      wallet_id_telegram_from=from_wallet.id_telegram,
+                                      wallet_id_telegram_to=to_wallet.id_telegram)

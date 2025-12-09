@@ -4,7 +4,7 @@ docker image prune -f
 docker images -a -q | % { docker image rm $_ -f }
 
 docker compose --env-file ./app/.env down
-docker compose --env-file ./app/.env.local up -d --force-recreate
+docker compose --env-file ./app/.env up -d --build --force-recreat
 
 export DATABASE_URL=postgresql+asyncpg://alchemy_user:strong_password_123@localhost:5432/alchemy_crm
 poetry run alembic revision --autogenerate -m "init"

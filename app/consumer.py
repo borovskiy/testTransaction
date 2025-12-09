@@ -4,7 +4,7 @@ from faststream import FastStream, AckPolicy
 from faststream.kafka import KafkaBroker, KafkaMessage
 
 from app.config import settings
-from app.schemas import BrakerMessage
+from app.schemas import BrokerMessageSchema
 
 MAX_RETRIES = 3
 RETRY_DELAY = 3
@@ -22,7 +22,7 @@ app = FastStream(broker)
     ack_policy=AckPolicy.MANUAL,
     auto_offset_reset="earliest",
 )
-async def notify_handler(message: BrakerMessage, msg: KafkaMessage):
+async def notify_handler(message: BrokerMessageSchema, msg: KafkaMessage):
     # читаем число попыток
     print(f"[Получено сообщение] Попытка: {message.retries}, данные: {message}")
 

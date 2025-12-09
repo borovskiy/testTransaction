@@ -21,7 +21,7 @@ class Wallet(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     owner: Mapped[str] = mapped_column(String, nullable=False)
-    id_wallet_telegram: Mapped[int] = mapped_column(nullable=True)
+    id_telegram: Mapped[int] = mapped_column(nullable=True)
     # Decimal, НЕ float
     balance: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=0)
 

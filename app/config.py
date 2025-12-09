@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from pydantic_settings import BaseSettings
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
     BOT_TOKEN: str
 
     class Config:
-        env_file = "app/.env"
+        env_file = os.environ.get("PATH_ENV")
         env_file_encoding = "utf-8"
 
     def __init__(self, **kwargs):
