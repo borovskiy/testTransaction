@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic_settings import BaseSettings
 
 
@@ -8,8 +10,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
     POSTGRES_PORT: int
+    DATABASE_URL: Optional[str] = None
 
-    DATABASE_URL: str
     ADMIN_WALLET_ID: int = 4
     # Kafka
     KAFKA_BROKER: str
@@ -27,11 +29,10 @@ class Settings(BaseSettings):
     PGADMIN_EXTERNAL_PORT: int
     KAFKA_EXTERNAL_PORT: int
     KAFKA_UI_EXTERNAL_PORT: int
-    APP_EXTERNAL_PORT: int
 
     # Application
     APP_HOST: str
-    APP_PORT: int
+    APP_EXTERNAL_PORT: int
     DEBUG: bool
     COMPOSE_PROJECT_NAME: str
 
@@ -41,8 +42,8 @@ class Settings(BaseSettings):
     JWT_ALG: str
     VERIFY_TOKEN_TTL_MIN: int
     APP_BASE_URL: str
-
     BOT_TOKEN: str
+
     class Config:
         env_file = "app/.env"
         env_file_encoding = "utf-8"
@@ -55,7 +56,6 @@ class Settings(BaseSettings):
                 f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
                 f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
-            print(self.DATABASE_URL)
 
 
 settings = Settings()

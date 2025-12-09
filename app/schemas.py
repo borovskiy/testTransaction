@@ -9,7 +9,7 @@ class TransferRequest(BaseModel):
 
 
 class TransferResponse(BaseModel):
-    success: bool
+    success: bool = True
     amount: Decimal
     commission: Decimal
 

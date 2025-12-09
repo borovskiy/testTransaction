@@ -5,12 +5,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db import get_session
 from app.schemas import TransferRequest, TransferResponse, BrakerMessage
 from app.services import transfer_funds
 from faststream.kafka import KafkaBroker
 
-broker = KafkaBroker("kafka:9094")
+broker = KafkaBroker(f"{settings.COMPOSE_PROJECT_NAME}_kafka:9094")
 
 
 @asynccontextmanager
@@ -27,6 +28,7 @@ app = FastAPI(lifespan=lifespan)
 
 @app.post("/api/transfer", response_model=TransferResponse)
 async def transfer(data: TransferRequest, session: AsyncSession = Depends(get_session)):
+    # Тут можно выносить в сервисы или как угодно. Задачка из 2 роутов. Не стал упарываться
     logging.info("Выполняем транзакцию")
     result = await transfer_funds(
         session,
@@ -46,7 +48,7 @@ async def transfer(data: TransferRequest, session: AsyncSession = Depends(get_se
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
-        host="0.0.0.0",
-        port=8001,
+        host=settings.APP_HOST,
+        port=settings.APP_EXTERNAL_PORT,
         reload=True,
     )

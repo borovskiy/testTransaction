@@ -7,17 +7,17 @@ services:
   # -----------------------------
   kafka:
     image: apache/kafka:latest
-    container_name: kafka
+    container_name: ${COMPOSE_PROJECT_NAME}_kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
 
       # Listeners
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${COMPOSE_PROJECT_NAME}_kafka:9092,EXTERNAL://${COMPOSE_PROJECT_NAME}_kafka:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@${COMPOSE_PROJECT_NAME}_kafka:9093
 
       # Topics config
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
@@ -49,12 +49,12 @@ services:
   # -----------------------------
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: kafka_ui
+    container_name: ${COMPOSE_PROJECT_NAME}_kafka_ui
     ports:
       - "${KAFKA_UI_EXTERNAL_PORT}:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${COMPOSE_PROJECT_NAME}_kafka:9092
       KAFKA_CLUSTERS_0_READONLY: "false"
     depends_on:
       kafka:
@@ -68,7 +68,7 @@ services:
   # -----------------------------
   postgres:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: ${COMPOSE_PROJECT_NAME}_postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -92,7 +92,7 @@ services:
   # -----------------------------
   pgadmin:
     image: dpage/pgadmin4:8
-    container_name: pgadmin
+    container_name: ${COMPOSE_PROJECT_NAME}_pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
@@ -108,10 +108,10 @@ services:
 
   api:
     build: .
-    command: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8001
-    container_name: api
+    command: poetry run uvicorn app.main:app --host ${APP_HOST} --port ${APP_EXTERNAL_PORT}
+    container_name: ${COMPOSE_PROJECT_NAME}_api
     ports:
-      - "8001:8001"
+      - "${APP_EXTERNAL_PORT}:${APP_EXTERNAL_PORT}"
     depends_on:
       kafka:
         condition: service_healthy
@@ -126,7 +126,7 @@ services:
   consumer:
     build: .
     command: poetry run python -m app.consumer
-    container_name: consumer
+    container_name: ${COMPOSE_PROJECT_NAME}_consumer
     depends_on:
       kafka:
         condition: service_healthy
