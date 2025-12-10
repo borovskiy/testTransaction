@@ -17,8 +17,9 @@ class Settings(BaseSettings):
     # Kafka
     KAFKA_BROKER: str
     KAFKA_HOST: str
-    KAFKA_PORT: int
-
+    KAFKA_PORT_INTERNAL: int
+    KAFKA_PORT_EXTERNAL: int
+    BROKER_KAFKA_HOST: Optional[str] = None
     # UI Interfaces
     PGADMIN_EMAIL: str
     PGADMIN_PASSWORD: str
@@ -44,10 +45,7 @@ class Settings(BaseSettings):
     VERIFY_TOKEN_TTL_MIN: int
     APP_BASE_URL: str
     BOT_TOKEN: str
-
-    class Config:
-        env_file = os.environ.get("PATH_ENV")
-        env_file_encoding = "utf-8"
+    COMPOSE_RUN: bool
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -57,6 +55,10 @@ class Settings(BaseSettings):
                 f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
                 f"{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
+        if self.COMPOSE_RUN:
+            self.BROKER_KAFKA_HOST = self.COMPOSE_PROJECT_NAME + "_" + self.KAFKA_HOST + ":" + str(self.KAFKA_PORT_INTERNAL)
+        else:
+            self.BROKER_KAFKA_HOST = "localhost" + ":" + str(self.KAFKA_PORT_EXTERNAL)
 
 
 settings = Settings()

@@ -2,51 +2,38 @@ version: "3.9"
 
 services:
 
-  # -----------------------------
-  # KAFKA IN KRaft MODE
-  # -----------------------------
+
   kafka:
     image: apache/kafka:latest
     container_name: ${COMPOSE_PROJECT_NAME}_kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-
       # Listeners
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${COMPOSE_PROJECT_NAME}_kafka:9092,EXTERNAL://${COMPOSE_PROJECT_NAME}_kafka:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${COMPOSE_PROJECT_NAME}_kafka:9092,EXTERNAL://localhost:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@${COMPOSE_PROJECT_NAME}_kafka:9093
-
       # Topics config
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
       KAFKA_NUM_PARTITIONS: 5
-
       # Required for stability
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
     ports:
       - "9094:9094"
-
     volumes:
       - kafka_data:/var/lib/kafka/data
 
     networks:
       - crm_network
-
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
       interval: 10s
       timeout: 10s
       retries: 10
-
-
-  # -----------------------------
-  # Kafka UI
-  # -----------------------------
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: ${COMPOSE_PROJECT_NAME}_kafka_ui
@@ -110,6 +97,8 @@ services:
     build: .
     command: poetry run uvicorn app.main:app --host ${APP_HOST} --port ${APP_EXTERNAL_PORT}
     container_name: ${COMPOSE_PROJECT_NAME}_api
+    env_file:
+      - ./app/.env.local
     ports:
       - "${APP_EXTERNAL_PORT}:${APP_EXTERNAL_PORT}"
     depends_on:
@@ -124,6 +113,8 @@ services:
       - crm_network
 
   consumer:
+    env_file:
+      - ./app/.env.local
     build: .
     command: poetry run python -m app.consumer
     container_name: ${COMPOSE_PROJECT_NAME}_consumer

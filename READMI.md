@@ -1,10 +1,17 @@
+Скачиваем реп
+Уже должны стоять Композ и Докер
+"app/.env.local" - Создать
+Саменит креды типа BOT_TOKEN и т.д
+Стартуем из корня
+docker compose --env-file app/.env.local up -d --build --force-recreat
+
 docker volume prune -f
 docker container prune -f
 docker image prune -f
 docker images -a -q | % { docker image rm $_ -f }
 
 docker compose --env-file ./app/.env down
-docker compose --env-file ./app/.env up -d --build --force-recreat
+
 
 export DATABASE_URL=postgresql+asyncpg://alchemy_user:strong_password_123@localhost:5432/alchemy_crm
 poetry run alembic revision --autogenerate -m "init"
@@ -12,9 +19,10 @@ poetry run alembic upgrade head
 
 http://localhost:8089/ KafkaUI
 http://localhost:8080/browser/ PGAdminUI
+http://localhost:8000/docs#/ Дока АПИ
+
 
 Чисто по фану тестовое звучало примерно так
-
 Мы пишем внутренний процессинг для начисления бонусов и переводов между сотрудниками. Твоя задача — реализовать отказоустойчивое ядро транзакций.
 Задача 1: API Транзакций 
 Реализовать модель Wallet (Кошелек) и Transaction (Транзакция). Сделать эндпоинт POST /api/transfer, который переводит валюту с кошелька А на кошелек Б.

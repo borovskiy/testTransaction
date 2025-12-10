@@ -13,16 +13,16 @@ from app.schemas import TransferRequest, TransferResponseSchema, BrokerMessageSc
 from app.services import transfer_funds, add_wallet
 from faststream.kafka import KafkaBroker
 
-# broker = KafkaBroker(f"localhost:9094")
-
+broker = KafkaBroker(settings.BROKER_KAFKA_HOST)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Starting Kafka producer (lifespan)...")
-    # await broker.start()
+    await broker.start()
+    print("🚀 Starting")
     yield
     print("🛑 Stopping Kafka producer (lifespan)...")
-    # await broker.stop()
+    await broker.stop()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -35,10 +35,12 @@ async def transfer(
     settings.ADMIN_WALLET_ID = admin_id
     return _ok("assign admin")
 
+
 @app.post("/api/add_wallet", response_model=WallerGetSchema)
 async def transfer(data: WallerCreateSchema, session: AsyncSession = Depends(get_session)):
     # Просто посоздавать юзеров
     return await add_wallet(data, session)
+
 
 @app.post("/api/transfer", response_model=TransferResponseSchema)
 async def transfer(data: TransferRequest, session: AsyncSession = Depends(get_session)):
@@ -51,10 +53,10 @@ async def transfer(data: TransferRequest, session: AsyncSession = Depends(get_se
         data.amount,
     )
     logging.info("Отправляем Kafka уведомлени")
-    await broker.publish(
-        BrokerMessageSchema(user_id_to_telegram_send_massage=result.wallet_id_telegram_to,
-                            user_id_from_telegram_send_massage=result.wallet_id_telegram_from,
-                            amount=data.amount, to=data.to_wallet).model_dump(), "transaction_notification")
+    broker_message = BrokerMessageSchema(user_id_to_telegram_send_massage=result.wallet_id_telegram_to,
+                                         user_id_from_telegram_send_massage=result.wallet_id_telegram_from,
+                                         amount=data.amount, to=data.to_wallet)
+    await broker.publish(broker_message.model_dump(), "transaction_notification")
 
     return TransferResponseSchema(**result.model_dump())
 

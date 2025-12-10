@@ -11,7 +11,7 @@ RETRY_DELAY = 3
 
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/sendMessage"
 GET_CHAT_URL = f"https://api.telegram.org/bot{settings.BOT_TOKEN}/getChat"
-broker = KafkaBroker(f"{settings.COMPOSE_PROJECT_NAME}_kafka:9094")
+broker = KafkaBroker(settings.BROKER_KAFKA_HOST)
 
 app = FastStream(broker)
 
